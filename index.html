@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <html>
+<style>
+  .subunit.SCT { fill: #ddc; }
+  .subunit.WLS { fill: #cdd; }
+  .subunit.NIR { fill: #cdc; }
+  .subunit.ENG { fill: #dcd; }
+  .subunit.IRL { fill: #fff; }
+</style>
+
 <head>
   <title>map test</title>
   <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -32,9 +40,15 @@
       var path = d3.geo.path()
                     .projection(projection);
 
-       svg.append("path")
-          .datum(subunits)
-          .attr("d", path);
+     svg.append("path")
+        .datum(subunits)
+        .attr("d", path);
+
+      svg.selectAll(".subunit")
+          .data(topojson.feature(uk, uk.objects.subunits).features)
+          .enter().append("path")
+            .attr("class", function(d) { return "subunit " + d.id; })
+            .attr("d", path);
     });
 </script>
 </body>
