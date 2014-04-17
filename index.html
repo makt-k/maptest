@@ -6,6 +6,31 @@
   .subunit.NIR { fill: #cdc; }
   .subunit.ENG { fill: #dcd; }
   .subunit.IRL { fill: #fff; }
+  .subunit-boundary {
+    fill: none;
+    stroke: #777;
+    stroke-dasharray: 2,2;
+    stroke-linejoin: round;
+  }
+
+  .subunit-boundary.IRL {
+    stroke: #aaa;
+  }
+  .subunit-label {
+      fill: #777;
+      fill-opacity: .5;
+      font-size: 20px;
+      font-weight: 300;
+      text-anchor: middle;
+    }
+
+  .subunit-label {
+    fill: #777;
+    fill-opacity: .5;
+    font-size: 20px;
+    font-weight: 300;
+    text-anchor: middle;
+  }
 </style>
 
 <head>
@@ -29,7 +54,7 @@
       // user topojson to parse data
       var subunits = topojson.feature(uk, uk.objects.subunits);
 
-      // use d3.geo to create projections
+      // use d3.geo to create projections of 3D countries onto 2D
       var projection = d3.geo.albers()
                           .center([0, 55.4])
                           .rotate([4.4, 0])
@@ -40,15 +65,55 @@
       var path = d3.geo.path()
                     .projection(projection);
 
-     svg.append("path")
-        .datum(subunits)
-        .attr("d", path);
 
-      svg.selectAll(".subunit")
-          .data(topojson.feature(uk, uk.objects.subunits).features)
-          .enter().append("path")
-            .attr("class", function(d) { return "subunit " + d.id; })
-            .attr("d", path);
+    // assigning class for css of countries
+    svg.selectAll(".subunit")
+        .data(topojson.feature(uk, uk.objects.subunits).features)
+        .enter().append("path")
+          .attr("class", function(d) { return "subunit " + d.id; })
+          .attr("d", path);
+
+    // marking cities
+     svg.append("path")
+        .datum(topojson.feature(uk, uk.objects.places))
+        .attr("d", path)
+        .attr("class", "place");
+
+    // drawing interior borders
+    svg.append("path")
+        .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b && a.id !== "IRL"; }))
+        .attr("d", path)
+        .attr("class", "subunit-boundary");
+
+    // border of Ireland
+    svg.append("path")
+        .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b && a.id === "IRL"; }))
+        .attr("d", path)
+        .attr("class", "subunit-boundary IRL");
+
+    // adding place names
+    svg.selectAll(".place-label")
+       .data(topojson.feature(uk, uk.objects.places).features)
+       .enter().append("text")
+              .attr("class", "place-label")
+              .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+              .attr("dy", ".35em")
+              .text(function(d) { return d.properties.name; });
+
+    // positioning place labels
+     svg.selectAll(".place-label")
+        .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+        .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; });
+
+    // adding country names
+    svg.selectAll(".subunit-label")
+      .data(topojson.feature(uk, uk.objects.subunits).features)
+      .enter().append("text")
+        .attr("class", function(d) { return "subunit-label " + d.id; })
+        .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+        .attr("dy", ".35em")
+        .text(function(d) { return d.properties.name; });
+
     });
 </script>
 </body>
